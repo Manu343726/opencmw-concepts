@@ -1,11 +1,11 @@
-#include <https://raw.githubusercontent.com/veselink1/refl-cpp/master/include/refl.hpp>
 #include <algorithm>
+#include <cassert>
 #include <iostream>
+#include <refl.hpp>
 #include <type_traits>
-#include <assert.h>
+#include <utility>
 
 // some type annotation concepts -- food-for-thought and discission - author: rstein
-
 
 /* just some helper function to return nicer human-readable type names */
 template<typename T> // N.B. extend this for custom classes using type-traits to query nicer class-type name
@@ -45,10 +45,10 @@ struct Annotated0 {
     const char *unit;
     const char *description;
 
-    constexpr Annotated0(const T &initValue, const char *initUnit = "", const char *initDescription = "") noexcept : value(initValue), unit(initUnit), description(initDescription) { }
+    constexpr explicit Annotated0(T initValue, const char *initUnit = "", const char *initDescription = "") noexcept : value(std::move(initValue)), unit(initUnit), description(initDescription) { }
     constexpr operator T& () { return value; }
-    constexpr const char *getUnit() const noexcept { return unit;}
-    constexpr const char *getDescription() const noexcept { return description;}
+    [[nodiscard]] constexpr const char *getUnit() const noexcept { return unit;}
+    [[nodiscard]] constexpr const char *getDescription() const noexcept { return description;}
 
     //constexpr auto operator<=>(const Annotated0&) const noexcept = default; // TODO: needs special implementation to check only value
     constexpr void operator+=(const T &a) noexcept { value += a; }
@@ -56,7 +56,7 @@ struct Annotated0 {
     constexpr void operator*=(const T &a) noexcept { value *= a; }
     constexpr void operator/=(const T &a) { value /= a; }
 
-    constexpr const char *getTypeName() const noexcept { return getNicerTypeName<T>(); }
+    [[nodiscard]] constexpr const char *getTypeName() const noexcept { return getNicerTypeName<T>(); }
     friend constexpr std::ostream &operator<<(std::ostream &os, const Annotated0& m) { return os << m.value; }
 };
 
@@ -64,24 +64,23 @@ template<size_t N>
 struct StringLiteral {
     char value[N]{};
 
-    constexpr StringLiteral(const char (&str)[N]) {
+    constexpr explicit StringLiteral(const char (&str)[N]) {
         std::copy_n(str, N, value);
     }
 };
 
-/* unit-/description-type annotation variant #2 C++20 compatible (to note: cool non-type template arguments
-    and of course the space-ship <=> operator */
+/* unit-/description-type annotation variant #2 C++20 compatible (to note: cool non-type template arguments and of course the space-ship <=> operator */
 template<typename T, const StringLiteral unit = "", const StringLiteral description = "">
 struct Annotated1 {
     T value;
-    constexpr Annotated1(const T &initValue) noexcept : value(initValue) { }
-    constexpr operator T& () { return value; }
-    constexpr const char *getUnit() const noexcept { return unit.value; }
-    constexpr const char *getDescription() const noexcept { return description.value; }
+    constexpr explicit Annotated1(const T &initValue) noexcept : value(initValue) { }
+    constexpr explicit operator T& () { return value; }
+    [[nodiscard]] constexpr const char *getUnit() const noexcept { return unit.value; }
+    [[nodiscard]] constexpr const char *getDescription() const noexcept { return description.value; }
 
     constexpr auto operator<=>(const Annotated1&) const noexcept = default;
     template<typename T2, const StringLiteral ounit = "", const StringLiteral odescription = "">
-    constexpr const bool operator==(const Annotated1<T2, ounit, odescription>& rhs) const noexcept {
+    constexpr bool operator==(const Annotated1<T2, ounit, odescription>& rhs) const noexcept {
         //TODO: optimise
         if (value != rhs.value) { // check if 'value' matches
             return false;
@@ -98,7 +97,7 @@ struct Annotated1 {
     constexpr void operator*=(const Annotated1 &a) noexcept {
         value *= a.value; // N.B. actually also changes 'unit' -- implement? Nice semmantic but performance....?
     }
-    constexpr const char *getTypeName() const noexcept { return getNicerTypeName<T>(); }
+    [[nodiscard]] constexpr const char *getTypeName() const noexcept { return getNicerTypeName<T>(); }
     friend constexpr std::ostream &operator<<(std::ostream &os, const Annotated1& m) { return os << m.value; }
 };
 
@@ -107,8 +106,8 @@ struct Annotated2 : refl::attr::usage::field {
     const char *unit;
     const char *description;
     constexpr Annotated2(const char *initUnit = "", const char *initDescription = "") noexcept : unit(initUnit), description(initDescription) { }
-    constexpr const char *getUnit() const noexcept { return unit; }
-    constexpr const char *getDescription() const noexcept { return description; }
+    [[nodiscard]] constexpr const char *getUnit() const noexcept { return unit; }
+    [[nodiscard]] constexpr const char *getDescription() const noexcept { return description; }
 };
 
 
@@ -247,7 +246,7 @@ int main() {
     assert(val10 == val11); // same value, same unit, same type, different description
 
     // specific example of traversing demo domain-object using refl-cpp and read macro-based annotatons
-    serialise(DomainObject{ 1,2,3});
+    serialise(DomainObject{ 1,2,3, OtherStruct{"hello", 42, 23}});
 
     return val1;
 }
