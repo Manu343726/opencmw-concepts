@@ -2,9 +2,9 @@
 #include <rttr/registration>
 #include <sstream>
 #include <string>
-#include <utility>
 
-static void write_arithmetic_property(std::stringstream &ss, const rttr::variant &value, const rttr::type &type) {
+namespace {
+void write_arithmetic_property(std::stringstream &ss, const rttr::variant &value, const rttr::type &type) {
     if (type == rttr::type::get<bool>()) {
         ss << value.to_bool();
     } else if (type == rttr::type::get<char>()) {
@@ -24,19 +24,19 @@ static void write_arithmetic_property(std::stringstream &ss, const rttr::variant
     }
 }
 
-static bool is_string(const rttr::variant &value) {
+bool is_string(const rttr::variant &value) {
     bool ret = false;
     value.to_string(&ret);
     return ret;
 }
 
-static bool is_uint64(const rttr::variant &value) {
+bool is_uint64(const rttr::variant &value) {
     bool ret = false;
     value.to_uint64(&ret);
     return ret;
 }
 
-static void write_enum_property(std::stringstream &ss, const rttr::variant &value) {
+void write_enum_property(std::stringstream &ss, const rttr::variant &value) {
     if (is_string(value)) {
         ss << value.to_string();
     } else if (is_uint64(value)) {
@@ -44,7 +44,7 @@ static void write_enum_property(std::stringstream &ss, const rttr::variant &valu
     }
 }
 
-static void write_string_property(std::stringstream &ss, const rttr::variant &value) {
+void write_string_property(std::stringstream &ss, const rttr::variant &value) {
     ss << value.to_string();
 }
 
@@ -70,14 +70,16 @@ void serialize(std::ostream &os, const rttr::instance &value) {
     os << "\n{\n";
     bool add_comma = false;
     for (auto prop : value.get_type().get_properties()) {
-        if (add_comma)
+        if (add_comma) {
             os << ",\n";
+        }
         os << "\"" << get_display_name(prop) << "\":";
         os << "\"" << member(prop, value) << "\"";
         add_comma = true;
     }
     os << "\n}\n";
 }
+} // namespace
 
 struct Test {
     float f = 0.0;
@@ -94,7 +96,7 @@ RTTR_REGISTRATION {
 
 int main() {
     std::cout << "Make JSON: ";
-    Test t = { 1.23f, 2, "Three" };
+    Test t = { 1.23F, 2, "Three" };
     serialize(std::cout, t);
     std::cout << std::endl;
 }
