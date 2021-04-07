@@ -15,6 +15,10 @@ macro(run_conan)
     NAME bincrafters
     URL https://api.bintray.com/conan/bincrafters/public-conan)
 
+  conan_add_remote(
+          NAME tiny_refl
+          URL https://api.bintray.com/conan/manu343726/conan-packages)
+
   conan_cmake_run(
     REQUIRES
     ${CONAN_EXTRA_REQUIRES}
@@ -22,6 +26,8 @@ macro(run_conan)
     docopt.cpp/0.6.2
     fmt/6.2.1
     spdlog/1.5.0
+    tinyrefl/0.5.3
+    BUILD_REQUIRES tinyrefl-tool/0.5.3
     OPTIONS
     ${CONAN_EXTRA_OPTIONS}
     BASIC_SETUP
