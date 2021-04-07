@@ -98,5 +98,4 @@ int main() {
     std::cout << "Make JSON: ";
     Test t = { 1.23F, 2, "Three" };
     serialize(std::cout, t);
-    std::cout << std::endl;
 }
