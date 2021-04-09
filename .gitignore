@@ -48,3 +48,6 @@ language.settings.xml
 
 # python venv files
 virtualenv/
+
+# tinyrefl files
+*.tinyrefl
