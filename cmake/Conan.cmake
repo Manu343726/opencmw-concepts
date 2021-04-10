@@ -22,9 +22,9 @@ macro(run_conan)
 
     conan_add_remote(
         NAME
-        tiny_refl
+        Manu343726
         URL
-        https://api.bintray.com/conan/manu343726/conan-packages)
+        https://manu343726.jfrog.io/artifactory/api/conan/conan-packages)
 
     conan_cmake_run(
         REQUIRES
