@@ -15,14 +15,30 @@ template<typename T>
 void serialize(std::ostream &os, const T &value) {
     os << "\n{\n";
     bool add_comma = false;
+    // tinyrefl::metadata<T>() returns the constexpr object containing the reflection metadata of T
+    // .children() returns a std::tuple<> with the metadata objects of the things declared inside the
+    // T declaration "scope": members, base classes, etc.
+    // tinyrefl::meta::foreach() is just an utility function to loop over a std::tuple
     tinyrefl::meta::foreach (tinyrefl::metadata<T>().children(), [&](auto child_) {
+        // This weird thing is needed to make the metadata object constexpr.
         constexpr decltype(child_) child;
 
+        // Metadata objects expose properties as member functions. kind() returns the kind of entity
+        // the object reflects (A file, a namespace, a function, etc).
         if constexpr (child.kind() == tinyrefl::entities::entity_kind::MEMBER_VARIABLE) {
             if (add_comma) {
                 os << ",\n";
             }
+
+            // All entities have a name, a full (qualified) name, a display name, and a full display name.
+            // The display name is the same as the name except for invokable entities (functions and constructors)
+            // where it also contains the signature of the entity.
             os << "\"" << child.name() << "\":";
+
+            // Since we selected member variables only, we know the metadata object is an
+            // instance of the class representing member variables (tinyrefl::entities::member_variable).
+            // This class provides a get() function to return a reference to the variable given an object of the
+            // member class type.
             os << "\"" << child.get(value) << "\"";
             add_comma = true;
         }
@@ -82,17 +98,22 @@ void serializeUsingSpecializedMemberVariableVisitor(std::ostream &os, const T &v
     os << "\n}\n";
 }
 
+// Now let's get a little deeper down the reflection hole: Let's serialize only
+// the members that were marked as serializable using our custom test::serializable user-defined attribute:
 template<typename T>
 void serializeCheckingAttributes(std::ostream &os, const T &value) {
     os << "\n{\n";
     bool add_comma = false;
-    // The difference is that this version takes into account inherited members
     tinyrefl::visit_class<T>(tinyrefl::member_variable_visitor([&](auto variable_) {
         constexpr decltype(variable_) variable;
 
+        // before accessing the attribute, make sure the variable was tagged with it
         if constexpr (variable.has_attribute("test::serializable")) {
+            // .attribute_objects() returns a std::tuple<> containing references to the attribute objects applied
+            // to the entity, in this case the test::serializable applied to the fields of the struct.
             constexpr const auto &serializable = std::get<const test::serializable &>(variable.attribute_objects());
 
+            // this if() calls the operator bool() implemented in test::serializable. Attributes are full fledged constexpr objects
             if constexpr (serializable) {
                 if (add_comma) {
                     os << ",\n";

@@ -33,9 +33,9 @@ macro(run_conan)
         docopt.cpp/0.6.2
         fmt/6.2.1
         spdlog/1.5.0
-        tinyrefl/0.5.4
+        tinyrefl/0.5.5
         BUILD_REQUIRES
-        tinyrefl-tool/0.5.4
+        tinyrefl-tool/0.5.5
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
